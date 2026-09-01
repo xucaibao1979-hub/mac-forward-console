@@ -10,7 +10,7 @@ const initialDevices:Device[]=[
  {id:'2108',name:'Mac mini 2108',ip:'192.168.1.108',port:22,username:'weixin',state:'空闲',free:142,script:'/opt/weixin/zf/twsend/2108/cs.sh',killScript:'kill2108.sh',cleanScript:'clean2108.sh',cpu:31,memory:58,memoryUsed:9.3,memoryTotal:16,diskTotal:256},
  {id:'2104',name:'Mac mini 2104',ip:'192.168.1.104',port:22,username:'weixin',state:'待清理',free:24,script:'/opt/weixin/zf/twsend/2104/cs.sh',killScript:'kill2104.sh',cleanScript:'clean2104.sh',cpu:12,memory:36,memoryUsed:5.8,memoryTotal:16,diskTotal:256},
 ];
-const menu=[['工作台',LayoutDashboard],['发送中心',Send],['设备管理',Server],['任务记录',FileText],['设置',Settings]] as const;
+const menu=[['工作台',LayoutDashboard],['发送中心',Send],['设备管理',Server],['任务记录',FileText]] as const;
 
 export default function Home(){
  const[login,setLogin]=useState(false),[mobile,setMobile]=useState(false),[active,setActive]=useState('工作台');
@@ -19,11 +19,11 @@ export default function Home(){
  const notify=(s:string)=>{setToast(s);setTimeout(()=>setToast(''),2400)};
  const pick=(id:string,p:'send'|'clean'|'stop')=>{setSelected(id);setPanel(p)};
  const log=(action:string,detail:string)=>setLogs(v=>[{id:Date.now(),time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),action,detail},...v]);
- const mutate=(kind:'send'|'clean'|'stop',type='图片发送')=>{
+ const mutate=(kind:'send'|'clean'|'stop',type='图片发送')=>{const device=devices.find(d=>d.id===selected);const command=kind==='send'?device?.script:kind==='stop'?device?.killScript:device?.cleanScript;
   setDevices(ds=>ds.map(d=>d.id===selected?kind==='send'?{...d,state:'发送中',progress:0}:kind==='clean'?{...d,state:'空闲',free:168}:{...d,state:'空闲',progress:undefined}:d));
-  if(kind==='send'){const id=`TASK-${String(Date.now()).slice(-8)}`;setTasks(t=>[{id,device:selected,type,status:'发送中',created:new Date().toLocaleString('zh-CN')},...t]);log('创建发送任务',`${selected} · ${type}`)}
-  if(kind==='clean')log('磁盘清理',`${selected} 清理指令已执行`);
-  if(kind==='stop'){setTasks(t=>t.map(x=>x.device===selected&&x.status==='发送中'?{...x,status:'已终止'}:x));log('终止任务',`${selected} 任务已终止`)}
+  if(kind==='send'){const id=`TASK-${String(Date.now()).slice(-8)}`;setTasks(t=>[{id,device:selected,type,status:'发送中',created:new Date().toLocaleString('zh-CN')},...t]);log('创建发送任务',`${selected} · 调用 ${command||'未配置发送脚本'} · ${type}`)}
+  if(kind==='clean')log('磁盘清理',`${selected} · 调用 ${command||'未配置清理脚本'}`);
+  if(kind==='stop'){setTasks(t=>t.map(x=>x.device===selected&&x.status==='发送中'?{...x,status:'已终止'}:x));log('终止任务',`${selected} · 调用 ${command||'未配置终止脚本'}`)}
   setPanel(null);notify(kind==='send'?`设备 ${selected} 已开始执行任务`:kind==='clean'?`${selected} 磁盘清理完成`:`${selected} 的任务已安全终止`);
  };
  if(!login)return <Login onLogin={()=>setLogin(true)}/>;
