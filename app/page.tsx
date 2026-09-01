@@ -73,8 +73,8 @@ const initialDevices: Device[] = [
     state: '空闲',
     free: 0,
     script: '/opt/weixin/zf/twsend/2106/cs.sh',
-    killScript: 'kill2106.sh',
-    cleanScript: 'clean2106.sh',
+    killScript: '/opt/weixin/zf/twsend/2106/kill2106.sh',
+    cleanScript: '/opt/weixin/zf/twsend/2106/clean2106.sh',
     cpu: 0,
     memory: 0,
     memoryUsed: 0,
@@ -92,8 +92,8 @@ const initialDevices: Device[] = [
     state: '空闲',
     free: 0,
     script: '/opt/weixin/zf/twsend/2108/cs.sh',
-    killScript: 'kill2108.sh',
-    cleanScript: 'clean2108.sh',
+    killScript: '/opt/weixin/zf/twsend/2108/kill2108.sh',
+    cleanScript: '/opt/weixin/zf/twsend/2108/clean2108.sh',
     cpu: 0,
     memory: 0,
     memoryUsed: 0,
@@ -111,8 +111,8 @@ const initialDevices: Device[] = [
     state: '空闲',
     free: 0,
     script: '/opt/weixin/zf/twsend/2104/cs.sh',
-    killScript: 'kill2104.sh',
-    cleanScript: 'clean2104.sh',
+    killScript: '/opt/weixin/zf/twsend/2104/kill2104.sh',
+    cleanScript: '/opt/weixin/zf/twsend/2104/clean2104.sh',
     cpu: 0,
     memory: 0,
     memoryUsed: 0,
@@ -858,16 +858,7 @@ function DeviceManagement({
                 name="cleanScript"
                 value={editing.cleanScript}
               />
-              <Field
-                label="磁盘容量（GB）"
-                name="diskTotal"
-                value={editing.diskTotal}
-              />
-              <Field
-                label="内存容量（GB）"
-                name="memoryTotal"
-                value={editing.memoryTotal}
-              />
+              <div className="sm:col-span-2 rounded-xl bg-slate-50 p-4 text-xs text-slate-500">磁盘容量和内存容量无需填写，设备连接成功后由系统自动采集。</div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -1118,22 +1109,23 @@ function SettingsHub({
 }
 function UserManagement({ notify }: { notify: (s: string) => void }) {
   const [modal, setModal] = useState<'add' | 'edit' | null>(null),
+    [editingIndex, setEditingIndex] = useState<number | null>(null),
     [users, setUsers] = useState([
-      { name: '系统管理员', email: 'admin@company.cn', role: '管理员' },
+      { name: '系统管理员', email: 'admin@company.cn', role: '管理员', permissions: ['创建任务','终止任务','磁盘清理','查看日志','设备配置','用户管理'] },
     ]);
   const save = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
+    const permissions = data.getAll('permissions').map(String);
+    const next = { name: String(data.get('name') || '新用户'), email: String(data.get('email') || ''), role: String(data.get('role') || '操作员'), permissions };
     if (modal === 'add')
       setUsers((v) => [
         ...v,
-        {
-          name: String(data.get('name') || '新用户'),
-          email: String(data.get('email') || ''),
-          role: String(data.get('role') || '操作员'),
-        },
+        next,
       ]);
+    else if (editingIndex !== null) setUsers((v) => v.map((u, i) => i === editingIndex ? next : u));
     setModal(null);
+    setEditingIndex(null);
     notify(modal === 'add' ? '用户已添加' : '管理员权限已更新');
   };
   return (
@@ -1143,7 +1135,7 @@ function UserManagement({ notify }: { notify: (s: string) => void }) {
         sub="控制用户可以查看和执行的操作"
         action={
           <button
-            onClick={() => setModal('add')}
+            onClick={() => { setEditingIndex(null); setModal('add'); }}
             className="flex items-center gap-2 rounded-xl bg-[#153c32] px-4 py-2.5 text-xs text-white"
           >
             <UserPlus className="size-4" />
@@ -1166,11 +1158,9 @@ function UserManagement({ notify }: { notify: (s: string) => void }) {
                 <p className="text-xs text-slate-400">{u.email}</p>
               </div>
             </div>
-            <span className="w-fit rounded-full bg-violet-50 px-3 py-1 text-xs text-violet-700">
-              {u.role}
-            </span>
+            <div><span className="w-fit rounded-full bg-violet-50 px-3 py-1 text-xs text-violet-700">{u.role}</span><p className="mt-2 text-[10px] text-slate-400">已授权 {u.permissions.length} 项功能</p></div>
             <button
-              onClick={() => setModal('edit')}
+              onClick={() => { setEditingIndex(i); setModal('edit'); }}
               className="rounded-lg border px-3 py-2 text-xs"
             >
               编辑设置
@@ -1197,7 +1187,7 @@ function UserManagement({ notify }: { notify: (s: string) => void }) {
                 姓名
                 <input
                   name="name"
-                  defaultValue={modal === 'edit' ? '系统管理员' : ''}
+                  defaultValue={modal === 'edit' && editingIndex !== null ? users[editingIndex].name : ''}
                   className="mt-2 h-11 w-full rounded-xl border px-3 text-sm"
                 />
               </label>
@@ -1206,7 +1196,7 @@ function UserManagement({ notify }: { notify: (s: string) => void }) {
                 <input
                   name="email"
                   type="email"
-                  defaultValue={modal === 'edit' ? 'admin@company.cn' : ''}
+                  defaultValue={modal === 'edit' && editingIndex !== null ? users[editingIndex].email : ''}
                   className="mt-2 h-11 w-full rounded-xl border px-3 text-sm"
                 />
               </label>
@@ -1214,7 +1204,7 @@ function UserManagement({ notify }: { notify: (s: string) => void }) {
                 角色
                 <select
                   name="role"
-                  defaultValue={modal === 'edit' ? '管理员' : '操作员'}
+                  defaultValue={modal === 'edit' && editingIndex !== null ? users[editingIndex].role : '操作员'}
                   className="mt-2 h-11 w-full rounded-xl border px-3 text-sm"
                 >
                   <option>管理员</option>
@@ -1237,7 +1227,9 @@ function UserManagement({ notify }: { notify: (s: string) => void }) {
                     <label key={x} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        defaultChecked={modal === 'edit'}
+                        name="permissions"
+                        value={x}
+                        defaultChecked={modal === 'edit' && editingIndex !== null ? users[editingIndex].permissions.includes(x) : false}
                         className="accent-emerald-600"
                       />
                       {x}
