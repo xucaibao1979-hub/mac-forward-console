@@ -46,9 +46,13 @@ export default defineConfig(async () => {
 
   return {
     css: { postcss: { plugins: [tailwindcss()] } },
-    server: isCodexSeatbeltSandbox
-      ? { watch: { useFsEvents: false, usePolling: true } }
-      : undefined,
+    server: {
+      host: process.env.WEB_HOST || '127.0.0.1',
+      port: Number(process.env.WEB_PORT || 3000),
+      allowedHosts: [process.env.PUBLIC_HOST || 'localhost', 'localhost', '127.0.0.1'],
+      ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
+      proxy: { '/api': { target: `http://127.0.0.1:${process.env.EXECUTOR_PORT || 8787}`, changeOrigin: true } },
+    },
     plugins: [
       vinext(),
       sites(),

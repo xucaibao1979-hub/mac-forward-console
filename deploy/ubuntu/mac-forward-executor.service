@@ -1,0 +1,19 @@
+[Unit]
+Description=Mac Forward Executor API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=macforward
+Group=macforward
+WorkingDirectory=/opt/mac-forward-console
+EnvironmentFile=/etc/mac-forward-console.env
+ExecStart=/usr/bin/node /opt/mac-forward-console/executor/server.mjs
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

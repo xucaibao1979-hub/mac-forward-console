@@ -1,0 +1,27 @@
+[Unit]
+Description=Mac Forward Console Executor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/weixin/mac-forward-console-ubuntu
+EnvironmentFile=/opt/weixin/mac-forward-console-config/.env
+ExecStart=/usr/bin/node /opt/weixin/mac-forward-console-ubuntu/executor/server.mjs
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictRealtime=true
+LimitNOFILE=65535
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

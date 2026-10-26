@@ -1,0 +1,20 @@
+[Unit]
+Description=Mac Forward Web Console
+After=network-online.target mac-forward-executor.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=macforward
+Group=macforward
+WorkingDirectory=/opt/mac-forward-console
+Environment=HOST=127.0.0.1
+Environment=PORT=3000
+ExecStart=/usr/bin/pnpm serve
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

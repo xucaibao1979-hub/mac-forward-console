@@ -28,6 +28,7 @@ yarn-error.log*
 
 # local environment
 .env*
+!.env.example
 
 # deployment and generated files
 .vercel
@@ -36,3 +37,16 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+executor/data/
+
+# Local caches, runtime data and generated archives
+.pnpm-store/
+*.tsbuildinfo
+*.key
+*.pfx
+*.p12
+*.log
+*.pid
+*.tar.gz
+*.zip
+**/node_modules/
